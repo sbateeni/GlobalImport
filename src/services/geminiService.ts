@@ -54,6 +54,17 @@ export interface ImportAnalysis {
   summary: string;
 }
 
+function isQuotaError(error: any): boolean {
+  const errorStr = typeof error === 'string' ? error : (error?.message || JSON.stringify(error));
+  return (
+    error?.status === 'RESOURCE_EXHAUSTED' || 
+    error?.code === 429 ||
+    errorStr.includes('429') || 
+    errorStr.includes('quota') ||
+    errorStr.includes('RESOURCE_EXHAUSTED')
+  );
+}
+
 export async function analyzeImport(productName: string, country: string, language: string = 'English'): Promise<ImportAnalysis> {
   const ai = getAI();
   const prompt = `
@@ -178,7 +189,7 @@ export async function analyzeImport(productName: string, country: string, langua
     return JSON.parse(text) as ImportAnalysis;
   } catch (error: any) {
     console.error("Error analyzing import:", error);
-    if (error?.message?.includes('429') || error?.message?.includes('quota')) {
+    if (isQuotaError(error)) {
       throw new Error("QUOTA_EXCEEDED");
     }
     throw error;
@@ -236,17 +247,23 @@ export async function trackContainer(containerCode: string, language: string = '
     4. Geopolitical Context: Account for 2026 conditions (e.g., Red Sea diversions via Cape of Good Hope).
     5. Mathematical Verification: Calculate the ETA based on the current position (e.g., Gibraltar to Ashdod is ~1,900-2,000 nautical miles). At 17 knots, verify if the ETA is realistic.
     
-    The response MUST include:
-    - carrier, shipName, voyageNumber.
-    - status, lastLocation, currentSpeed, currentHeading, estimatedArrival.
-    - totalDuration: Explain why the journey took longer (e.g., 58+ days vs 30 days) due to the Cape of Good Hope route.
-    - totalDistance: Estimated total miles (e.g., ~15,000 nm).
-    - routeNotes: A professional analysis of the journey stages (China -> SE Asia -> Indian Ocean -> Cape of Good Hope -> Atlantic -> Gibraltar -> Mediterranean).
-    - costEstimates: Provide 2026 estimates for discharge/clearance in the destination port, explicitly mentioning Bunker Surcharges (EBS/BAF) and local fees.
-    - alerts: Mention potential Mediterranean obstacles (congestion, weather, or regional tensions) for the next 5 days.
-    - events: Past milestones.
-    - futureTimeline: Predicted milestones until final discharge.
-    - coordinates: Current latitude and longitude of the vessel (e.g., { lat: 35.9, lng: -5.6 } for Gibraltar).
+    The response MUST include detailed content for each field:
+    - carrier: Full carrier name.
+    - shipName: Current vessel name.
+    - voyageNumber: Current voyage ID.
+    - status: Detailed current status (e.g., "In Transit - Near Gibraltar").
+    - lastLocation: Specific location with "AIS Live" tag.
+    - currentSpeed: Speed in knots.
+    - currentHeading: Heading in degrees and cardinal direction.
+    - estimatedArrival: Precise date (YYYY-MM-DD).
+    - totalDuration: A detailed explanation of the journey duration, explicitly mentioning the route taken (e.g., "58 days via Cape of Good Hope due to Red Sea diversions").
+    - totalDistance: Estimated total miles (e.g., "~14,850 nm").
+    - routeNotes: A professional, multi-sentence analysis of the journey stages and current conditions.
+    - costEstimates: Provide detailed 2026 estimates for discharge, clearance, and specific surcharges like BAF/EBS.
+    - alerts: Mention specific potential obstacles (congestion, weather, or regional tensions) for the next 5-7 days.
+    - events: At least 2-3 significant past milestones with dates and locations.
+    - futureTimeline: At least 2-3 predicted future milestones until final delivery.
+    - coordinates: Current latitude and longitude of the vessel.
     
     Provide the response strictly in JSON format matching the requested schema.
     All text should be in ${language}.
@@ -328,8 +345,7 @@ export async function trackContainer(containerCode: string, language: string = '
   } catch (error: any) {
     console.error("Error tracking container:", error);
     
-    const errorStr = typeof error === 'string' ? error : (error?.message || JSON.stringify(error));
-    if (errorStr.includes('429') || errorStr.includes('quota') || errorStr.includes('RESOURCE_EXHAUSTED')) {
+    if (isQuotaError(error)) {
       // Fallback to realistic mock data for demo purposes if quota is hit
       if (containerCode.toUpperCase().includes('MEDU')) {
         return {
@@ -438,7 +454,7 @@ export async function fetchShippingRates(country: string, language: string = 'En
     return JSON.parse(text) as ShippingRates;
   } catch (error: any) {
     console.error("Error fetching shipping rates:", error);
-    if (error?.message?.includes('429') || error?.message?.includes('quota')) {
+    if (isQuotaError(error)) {
       throw new Error("QUOTA_EXCEEDED");
     }
     throw error;
@@ -477,7 +493,7 @@ export async function chatFollowUp(
     return response.text || "I'm sorry, I couldn't generate a response.";
   } catch (error: any) {
     console.error("Error in chat follow-up:", error);
-    if (error?.message?.includes('429') || error?.message?.includes('quota')) {
+    if (isQuotaError(error)) {
       throw new Error("QUOTA_EXCEEDED");
     }
     throw error;

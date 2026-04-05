@@ -88,8 +88,7 @@ export const ContainerTracking: React.FC<ContainerTrackingProps> = ({ language, 
       setTrackingInfo(info);
       onSaveTracking(info); // Auto-save on successful track
     } catch (err: any) {
-      const errStr = err instanceof Error ? err.message : String(err);
-      if (err.message === 'QUOTA_EXCEEDED' || errStr.includes('429') || errStr.includes('RESOURCE_EXHAUSTED')) {
+      if (err.message === 'QUOTA_EXCEEDED') {
         setError(language === 'Arabic' 
           ? 'عذراً، لقد تجاوزت حصة الاستخدام اليومية لتتبع الحاويات. يرجى المحاولة مرة أخرى لاحقاً.' 
           : 'Sorry, you have exceeded the daily container tracking quota. Please try again later.');
