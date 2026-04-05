@@ -160,7 +160,7 @@ export async function analyzeImport(productName: string, country: string, langua
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3.1-pro-preview",
+      model: "gemini-3-flash-preview",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -312,7 +312,7 @@ export async function trackContainer(containerCode: string, language: string = '
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3.1-pro-preview",
+      model: "gemini-3-flash-preview",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -423,7 +423,7 @@ export async function fetchShippingRates(country: string, language: string = 'En
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3.1-pro-preview",
+      model: "gemini-3-flash-preview",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -452,7 +452,7 @@ export async function chatFollowUp(
 ): Promise<string> {
   const ai = getAI();
   const chat = ai.chats.create({
-    model: "gemini-3.1-pro-preview",
+    model: "gemini-3-flash-preview",
     config: {
       systemInstruction: `
         You are an expert import/export consultant. 
