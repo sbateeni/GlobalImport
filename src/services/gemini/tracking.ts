@@ -1,5 +1,5 @@
 import { Type, Schema } from "@google/genai";
-import { getAI } from "./config";
+import { getAI, AGENT_SYSTEM_INSTRUCTION } from "./config";
 import { ContainerTrackingInfo } from "./types";
 import { isQuotaError } from "./utils";
 
@@ -101,6 +101,7 @@ export async function trackContainer(containerCode: string, language: string = '
       model: "gemini-3-flash-preview",
       contents: prompt,
       config: {
+        systemInstruction: AGENT_SYSTEM_INSTRUCTION(language),
         responseMimeType: "application/json",
         responseSchema: responseSchema,
         tools: [{ googleSearch: {} }],
@@ -115,29 +116,36 @@ export async function trackContainer(containerCode: string, language: string = '
     console.error("Error tracking container:", error);
     
     if (isQuotaError(error)) {
+      const isAr = language === 'Arabic';
       if (containerCode.toUpperCase().includes('MEDU')) {
         return {
           containerNumber: containerCode.toUpperCase(),
           carrier: "MSC (Mediterranean Shipping Company)",
           shipName: "MSC AMBRA",
           voyageNumber: "MA612R",
-          status: "In Transit - Near Gibraltar",
-          lastLocation: "Strait of Gibraltar (AIS Live)",
-          currentSpeed: "17.4 knots",
-          currentHeading: "92° (East)",
+          status: isAr ? "قيد العبور - بالقرب من جبل طارق" : "In Transit - Near Gibraltar",
+          lastLocation: isAr ? "مضيق جبل طارق (AIS Live)" : "Strait of Gibraltar (AIS Live)",
+          currentSpeed: isAr ? "17.4 عقدة" : "17.4 knots",
+          currentHeading: isAr ? "92° (شرق)" : "92° (East)",
           estimatedArrival: "2026-04-12",
-          totalDuration: "58 days (via Cape of Good Hope)",
-          totalDistance: "14,850 nm",
-          routeNotes: "The vessel is currently entering the Mediterranean Sea after a long journey around the Cape of Good Hope. Weather conditions are stable.",
-          costEstimates: "Estimated local discharge fees in Ashdod: $450. Customs clearance: $150. BAF Surcharge applied.",
-          alerts: "Minor congestion reported at Haifa port. No immediate delays expected for Ashdod.",
+          totalDuration: isAr ? "58 يوماً (عبر رأس الرجاء الصالح)" : "58 days (via Cape of Good Hope)",
+          totalDistance: isAr ? "14,850 ميل بحري" : "14,850 nm",
+          routeNotes: isAr 
+            ? "السفينة تدخل حالياً البحر الأبيض المتوسط بعد رحلة طويلة حول رأس الرجاء الصالح. الظروف الجوية مستقرة."
+            : "The vessel is currently entering the Mediterranean Sea after a long journey around the Cape of Good Hope. Weather conditions are stable.",
+          costEstimates: isAr
+            ? "رسوم التفريغ المحلية المقدرة في أشدود: 450 دولاراً. التخليص الجمركي: 150 دولاراً. تم تطبيق رسوم BAF الإضافية."
+            : "Estimated local discharge fees in Ashdod: $450. Customs clearance: $150. BAF Surcharge applied.",
+          alerts: isAr
+            ? "تم الإبلاغ عن ازدحام طفيف في ميناء حيفا. لا توجد تأخيرات فورية متوقعة لأشدود."
+            : "Minor congestion reported at Haifa port. No immediate delays expected for Ashdod.",
           events: [
-            { date: "2026-02-15", location: "Ningbo, China", description: "Container Loaded" },
-            { date: "2026-03-10", location: "Cape of Good Hope", description: "Vessel Passed Southern Tip" }
+            { date: "2026-02-15", location: isAr ? "نينغبو، الصين" : "Ningbo, China", description: isAr ? "تم تحميل الحاوية" : "Container Loaded" },
+            { date: "2026-03-10", location: isAr ? "رأس الرجاء الصالح" : "Cape of Good Hope", description: isAr ? "مرت السفينة بالطرف الجنوبي" : "Vessel Passed Southern Tip" }
           ],
           futureTimeline: [
-            { date: "2026-04-12", event: "Port Arrival", location: "Ashdod, Israel" },
-            { date: "2026-04-14", event: "Customs Release", location: "Ashdod Terminal" }
+            { date: "2026-04-12", event: isAr ? "وصول الميناء" : "Port Arrival", location: isAr ? "أشدود، إسرائيل" : "Ashdod, Israel" },
+            { date: "2026-04-14", event: isAr ? "الإفراج الجمركي" : "Customs Release", location: isAr ? "محطة أشدود" : "Ashdod Terminal" }
           ],
           trackingUrl: "https://www.msc.com/track-a-container",
           coordinates: { lat: 35.9, lng: -5.6 }

@@ -2,14 +2,17 @@ import React, { useState, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { Truck, Calculator, DollarSign, Package, ArrowRight, Info, ShieldAlert, Globe, Coins, Clock } from 'lucide-react';
 import { ShippingRates } from '../services/gemini';
+import { convertAmount } from '../services/currency';
 
 interface ShippingCalculatorProps {
   constants: ShippingRates[];
   t: any;
   isRtl: boolean;
+  currency: string;
+  exchangeRates: any;
 }
 
-export const ShippingCalculator: React.FC<ShippingCalculatorProps> = ({ constants, t, isRtl }) => {
+export const ShippingCalculator: React.FC<ShippingCalculatorProps> = ({ constants, t, isRtl, currency, exchangeRates }) => {
   const [selectedCountry, setSelectedCountry] = useState('');
   const [origin, setOrigin] = useState<'china' | 'europe' | 'usa' | 'turkey'>('china');
   const [shippingType, setShippingType] = useState<'fcl20' | 'fcl40' | 'lcl'>('fcl20');
@@ -18,6 +21,12 @@ export const ShippingCalculator: React.FC<ShippingCalculatorProps> = ({ constant
   const [goodsValue, setGoodsValue] = useState(0);
   const [hsCode, setHsCode] = useState('');
   const [showResults, setShowResults] = useState(false);
+
+  const convert = (val: string | number) => {
+    const strVal = typeof val === 'number' ? `$${val}` : val;
+    if (currency === 'USD') return strVal;
+    return `${strVal} (${convertAmount(strVal, exchangeRates, currency)})`;
+  };
 
   const normalizeStr = (str: string) => {
     return str
@@ -251,7 +260,7 @@ export const ShippingCalculator: React.FC<ShippingCalculatorProps> = ({ constant
                   <DollarSign className="absolute -right-4 -bottom-4 w-32 h-32 opacity-10" />
                   <div className="relative z-10">
                     <div className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">{isAr ? 'الإجمالي بالدولار' : 'Total in USD'}</div>
-                    <div className="text-4xl font-black">${calculation.totalUSD.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                    <div className="text-4xl font-black">{convert(calculation.totalUSD)}</div>
                   </div>
                 </div>
                 <div className="bg-blue-600 text-white p-8 rounded-3xl shadow-xl relative overflow-hidden">
@@ -283,7 +292,7 @@ export const ShippingCalculator: React.FC<ShippingCalculatorProps> = ({ constant
                     <div className="space-y-3">
                       <div className="flex justify-between items-center py-2 border-b border-slate-50">
                         <span className="text-slate-600 text-sm">{isAr ? 'سعر الشحن الأساسي' : 'Base Freight'}</span>
-                        <span className="font-bold text-slate-900">${calculation.basePrice.toLocaleString()}</span>
+                        <span className="font-bold text-slate-900">{convert(calculation.basePrice)}</span>
                       </div>
                       {selectedRate.costBreakdown.map((item, idx) => (
                         <div key={idx} className="flex justify-between items-center py-2 border-b border-slate-50">
@@ -301,28 +310,28 @@ export const ShippingCalculator: React.FC<ShippingCalculatorProps> = ({ constant
                       {calculation.bafAmount > 0 && (
                         <div className="flex justify-between items-center py-2 border-b border-blue-50 bg-blue-50/30 px-2 rounded-lg">
                           <span className="text-blue-700 text-sm font-medium">{isAr ? 'رسوم تعديل الوقود (BAF 35%)' : 'Bunker Adjustment Factor (BAF 35%)'}</span>
-                          <span className="font-bold text-blue-700">+ ${calculation.bafAmount.toLocaleString()}</span>
+                          <span className="font-bold text-blue-700">+ {convert(calculation.bafAmount)}</span>
                         </div>
                       )}
                       {calculation.emergencyFee > 0 && (
                         <div className="flex justify-between items-center py-2 border-b border-slate-50">
                           <span className="text-slate-600 text-sm">{isAr ? 'رسوم طوارئ (2026)' : 'Emergency Fee (2026)'}</span>
-                          <span className="font-bold text-slate-900">+ ${calculation.emergencyFee.toLocaleString()}</span>
+                          <span className="font-bold text-slate-900">+ {convert(calculation.emergencyFee)}</span>
                         </div>
                       )}
                       <div className="flex justify-between items-center py-2 border-b border-slate-50">
                         <span className="text-slate-600 text-sm">{isAr ? 'رسوم مخاطر الحرب والتشغيل' : 'War Risk & Operational Recovery'}</span>
-                        <span className="font-bold text-slate-900">+ ${calculation.warRisk.toLocaleString()}</span>
+                        <span className="font-bold text-slate-900">+ {convert(calculation.warRisk)}</span>
                       </div>
                       {calculation.congestion > 0 && (
                         <div className="flex justify-between items-center py-2 border-b border-slate-50">
                           <span className="text-slate-600 text-sm">{isAr ? 'رسوم ازدحام الموانئ' : 'Port Congestion Surcharge'}</span>
-                          <span className="font-bold text-slate-900">+ ${calculation.congestion.toLocaleString()}</span>
+                          <span className="font-bold text-slate-900">+ {convert(calculation.congestion)}</span>
                         </div>
                       )}
                       <div className="flex justify-between items-center py-2 border-b border-slate-50">
                         <span className="text-slate-600 text-sm">{isAr ? 'ضريبة القيمة المضافة (17%)' : 'VAT (17%)'}</span>
-                        <span className="font-bold text-slate-900">+ ${calculation.vatAmount.toLocaleString()}</span>
+                        <span className="font-bold text-slate-900">+ {convert(calculation.vatAmount)}</span>
                       </div>
                     </div>
                   </div>

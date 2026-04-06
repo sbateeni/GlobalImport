@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { analyzeImport, chatFollowUp, fetchShippingRates, findHSCode, ImportAnalysis, ShippingRates, ContainerTrackingInfo, HSCodeResult } from '../services/gemini';
+import { fetchExchangeRates, ExchangeRates } from '../services/currency';
 import { SavedResult, AppView } from '../types';
 
 export function useAppLogic(language: string) {
@@ -28,6 +29,20 @@ export function useAppLogic(language: string) {
   });
   const [hsCodeResult, setHsCodeResult] = useState<HSCodeResult | null>(null);
   const [isSearchingHS, setIsSearchingHS] = useState(false);
+  const [currency, setCurrency] = useState(() => localStorage.getItem('import_currency') || 'USD');
+  const [exchangeRates, setExchangeRates] = useState<ExchangeRates>({ USD: 1 });
+
+  useEffect(() => {
+    const loadRates = async () => {
+      const rates = await fetchExchangeRates();
+      setExchangeRates(rates);
+    };
+    loadRates();
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('import_currency', currency);
+  }, [currency]);
 
   useEffect(() => {
     localStorage.setItem('import_saved', JSON.stringify(savedResults));
@@ -203,6 +218,11 @@ export function useAppLogic(language: string) {
     handleChat,
     saveActualCosts,
     handleFetchRates,
-    deleteConstant
+    deleteConstant,
+    currency,
+    setCurrency,
+    exchangeRates,
+    hsCodeResult,
+    isSearchingHS
   };
 }

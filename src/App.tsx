@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AlertTriangle, ShieldCheck } from 'lucide-react';
 import { Language } from './types';
-import { Header } from './components/Header';
+import { Sidebar } from './components/Sidebar';
 import { SearchForm } from './components/SearchForm';
 import { AnalysisResult } from './components/AnalysisResult';
 import { SavedResults } from './components/SavedResults';
@@ -47,7 +47,10 @@ export default function App() {
     handleChat,
     saveActualCosts,
     handleFetchRates,
-    deleteConstant
+    deleteConstant,
+    currency,
+    setCurrency,
+    exchangeRates
   } = useAppLogic(language);
 
   useEffect(() => {
@@ -126,7 +129,7 @@ export default function App() {
 
   return (
     <div className={`min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-200 ${isRtl ? 'rtl' : 'ltr'}`} dir={isRtl ? 'rtl' : 'ltr'}>
-      <Header 
+      <Sidebar 
         currentView={currentView}
         onViewChange={setCurrentView}
         savedCount={savedResults.length}
@@ -134,9 +137,12 @@ export default function App() {
         onLanguageChange={setLanguage}
         languages={LANGUAGES}
         t={t}
+        currency={currency}
+        onCurrencyChange={setCurrency}
       />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pb-32 md:pb-12">
+      <main className={`transition-all duration-300 ${isRtl ? 'lg:pr-64' : 'lg:pl-64'} min-h-screen`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <AnimatePresence mode="wait">
           {error && (
             <motion.div 
@@ -193,6 +199,8 @@ export default function App() {
                   onChatSubmit={handleChat}
                   isChatLoading={isChatLoading}
                   onSaveResult={saveResult}
+                  currency={currency}
+                  exchangeRates={exchangeRates}
                 />
               )}
             </motion.div>
@@ -229,6 +237,8 @@ export default function App() {
               constants={shippingConstants}
               t={t}
               isRtl={isRtl}
+              currency={currency}
+              exchangeRates={exchangeRates}
             />
           )}
 
@@ -259,6 +269,7 @@ export default function App() {
             />
           )}
         </AnimatePresence>
+        </div>
       </main>
 
       {/* Footer Disclaimer */}

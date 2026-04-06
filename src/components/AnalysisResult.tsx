@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { ImportAnalysis } from '../services/gemini';
 import { CostDashboard } from './CostDashboard';
+import { convertAmount } from '../services/currency';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -23,14 +24,22 @@ interface AnalysisResultProps {
   onChatSubmit: (e: React.FormEvent) => void;
   isChatLoading: boolean;
   onSaveResult: () => void;
+  currency: string;
+  exchangeRates: any;
 }
 
 export const AnalysisResult: React.FC<AnalysisResultProps> = ({
   analysis, t, isRtl, actualCostsInput, onActualCostChange, onSaveActualCosts,
-  chatMessages, chatInput, onChatInputChange, onChatSubmit, isChatLoading, onSaveResult
+  chatMessages, chatInput, onChatInputChange, onChatSubmit, isChatLoading, onSaveResult,
+  currency, exchangeRates
 }) => {
   const [isExporting, setIsExporting] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
+
+  const convert = (val: string) => {
+    if (currency === 'USD') return val;
+    return `${val} (${convertAmount(val, exchangeRates, currency)})`;
+  };
 
   const exportToPDF = async () => {
     if (!reportRef.current) return;
@@ -106,7 +115,12 @@ export const AnalysisResult: React.FC<AnalysisResultProps> = ({
 
       <div ref={reportRef} className="space-y-8 bg-white/50 p-2 rounded-3xl">
         {/* Cost Dashboard */}
-        <CostDashboard data={analysis.costBreakdown} language={isRtl ? 'Arabic' : 'English'} />
+        <CostDashboard 
+          data={analysis.costBreakdown} 
+          language={isRtl ? 'Arabic' : 'English'} 
+          currency={currency}
+          exchangeRates={exchangeRates}
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Left Column: Sourcing & Logistics */}
@@ -123,7 +137,7 @@ export const AnalysisResult: React.FC<AnalysisResultProps> = ({
                     <div className="flex justify-between items-start mb-4">
                       <h4 className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{option.name}</h4>
                       <span className="bg-blue-50 text-blue-700 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
-                        {option.estimatedPriceRange}
+                        {convert(option.estimatedPriceRange)}
                       </span>
                     </div>
                     <p className="text-sm text-slate-600 mb-4 leading-relaxed">{option.qualityNotes}</p>
@@ -188,9 +202,9 @@ export const AnalysisResult: React.FC<AnalysisResultProps> = ({
               </div>
               <div className="p-6 space-y-6">
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 bg-slate-50 rounded-2xl">
-                    <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">{t.estCost}</div>
-                    <div className="text-sm font-bold text-slate-900">{analysis.shippingDetails.estimatedCostRange}</div>
+                  <div>
+                    <span className="text-xs text-slate-400 block mb-1">{t.estCost}</span>
+                    <div className="text-sm font-bold text-slate-900">{convert(analysis.shippingDetails.estimatedCostRange)}</div>
                   </div>
                   <div className="p-4 bg-slate-50 rounded-2xl">
                     <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">{t.estTime}</div>
@@ -228,7 +242,7 @@ export const AnalysisResult: React.FC<AnalysisResultProps> = ({
                       <li key={idx} className="p-6 flex flex-col gap-3 hover:bg-slate-50 transition-colors">
                         <div className="flex justify-between items-center">
                           <span className="text-sm font-bold text-slate-700">{item.item}</span>
-                          <span className="text-sm font-extrabold text-slate-900">{item.estimatedCost}</span>
+                          <span className="text-sm font-extrabold text-slate-900">{convert(item.estimatedCost)}</span>
                         </div>
                         <div className="flex items-center gap-3">
                           <div className="relative flex-1">

@@ -3,6 +3,8 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Ba
 import { motion } from 'motion/react';
 import { PieChart as PieIcon, BarChart3, Info } from 'lucide-react';
 
+import { convertAmount } from '../services/currency';
+
 interface CostItem {
   item: string;
   estimatedCost: string;
@@ -11,10 +13,17 @@ interface CostItem {
 interface CostDashboardProps {
   data: CostItem[];
   language: string;
+  currency: string;
+  exchangeRates: any;
 }
 
-export const CostDashboard: React.FC<CostDashboardProps> = ({ data, language }) => {
+export const CostDashboard: React.FC<CostDashboardProps> = ({ data, language, currency, exchangeRates }) => {
   const isRtl = language === 'Arabic';
+
+  const convert = (val: string) => {
+    if (currency === 'USD') return val;
+    return `${val} (${convertAmount(val, exchangeRates, currency)})`;
+  };
 
   // Parse costs into numbers for the chart
   const chartData = data.map(item => {
@@ -23,7 +32,8 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ data, language }) 
     return {
       name: item.item,
       value: numericValue,
-      original: item.estimatedCost
+      original: item.estimatedCost,
+      converted: convert(item.estimatedCost)
     };
   }).filter(item => item.value > 0);
 
@@ -34,7 +44,7 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({ data, language }) 
       return (
         <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
           <p className="font-medium text-gray-900">{payload[0].name}</p>
-          <p className="text-blue-600 font-bold">{payload[0].payload.original}</p>
+          <p className="text-blue-600 font-bold">{payload[0].payload.converted}</p>
         </div>
       );
     }

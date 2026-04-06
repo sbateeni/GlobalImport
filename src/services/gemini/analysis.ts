@@ -1,5 +1,5 @@
 import { Type, Schema } from "@google/genai";
-import { getAI } from "./config";
+import { getAI, AGENT_SYSTEM_INSTRUCTION } from "./config";
 import { ImportAnalysis } from "./types";
 import { isQuotaError } from "./utils";
 
@@ -7,9 +7,7 @@ export async function analyzeImport(productName: string, country: string, langua
   const ai = getAI();
   const prompt = `
     I want to import "${productName}" from China to "${country}".
-    Please act as an expert import/export consultant and provide a detailed analysis.
-    
-    IMPORTANT: Provide all text descriptions, titles, and summaries in ${language}.
+    Please provide a detailed analysis.
     
     Use Google Search to find current information about:
     1. The best quality and lowest price options for this product in China. Focus on finding direct factories, manufacturing hubs (e.g., Shenzhen for electronics, Yiwu for small commodities), and reputable suppliers beyond just Alibaba (e.g., Global Sources, direct factory websites).
@@ -112,6 +110,7 @@ export async function analyzeImport(productName: string, country: string, langua
       model: "gemini-3-flash-preview",
       contents: prompt,
       config: {
+        systemInstruction: AGENT_SYSTEM_INSTRUCTION(language),
         responseMimeType: "application/json",
         responseSchema: responseSchema,
         tools: [{ googleSearch: {} }],

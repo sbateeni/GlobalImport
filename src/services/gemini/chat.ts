@@ -1,4 +1,4 @@
-import { getAI } from "./config";
+import { getAI, AGENT_SYSTEM_INSTRUCTION } from "./config";
 import { ImportAnalysis } from "./types";
 import { isQuotaError } from "./utils";
 
@@ -13,11 +13,11 @@ export async function chatFollowUp(
     model: "gemini-3-flash-preview",
     config: {
       systemInstruction: `
-        You are an expert import/export consultant. 
+        ${AGENT_SYSTEM_INSTRUCTION(language)}
+        
         The user has already received an import analysis for a product.
         Here is the context of that analysis: ${JSON.stringify(context)}.
         Answer the user's follow-up questions based on this context and your general knowledge.
-        Provide the response in ${language}.
       `,
     },
   });
