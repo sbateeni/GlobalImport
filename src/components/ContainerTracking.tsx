@@ -36,6 +36,7 @@ export const ContainerTracking: React.FC<ContainerTrackingProps> = ({ language, 
   const [trackingInfo, setTrackingInfo] = useState<ContainerTrackingInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [retryCountdown, setRetryCountdown] = useState(0);
   const [alertThreshold, setAlertThreshold] = useState<number>(24); // Default 24 hours
   const [isAlertEnabled, setIsAlertEnabled] = useState(false);
 
@@ -60,6 +61,13 @@ export const ContainerTracking: React.FC<ContainerTrackingProps> = ({ language, 
   const isAlertTriggered = checkAlert();
 
   React.useEffect(() => {
+    if (retryCountdown > 0) {
+      const timer = setTimeout(() => setRetryCountdown(retryCountdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [retryCountdown]);
+
+  React.useEffect(() => {
     if (isAlertTriggered) {
       console.log(`[ETA ALERT] Container ${trackingInfo?.containerNumber} is arriving within ${alertThreshold} hours! ETA: ${trackingInfo?.estimatedArrival}`);
     }
@@ -79,6 +87,13 @@ export const ContainerTracking: React.FC<ContainerTrackingProps> = ({ language, 
     const code = codeToTrack || containerCode;
     if (!code.trim()) return;
 
+    if (retryCountdown > 0) {
+      setError(language === 'Arabic' 
+        ? `يرجى الانتظار ${retryCountdown} ثانية قبل المحاولة مرة أخرى.` 
+        : `Please wait ${retryCountdown} seconds before trying again.`);
+      return;
+    }
+
     setIsTracking(true);
     setError(null);
     if (!codeToTrack) setTrackingInfo(null);
@@ -89,9 +104,10 @@ export const ContainerTracking: React.FC<ContainerTrackingProps> = ({ language, 
       onSaveTracking(info); // Auto-save on successful track
     } catch (err: any) {
       if (err.message === 'QUOTA_EXCEEDED') {
+        setRetryCountdown(30);
         setError(language === 'Arabic' 
-          ? 'نظام التتبع العميق (AI) مشغول حالياً بسبب ضغط الاستخدام. يرجى الانتظار لمدة 30 ثانية والمحاولة مرة أخرى، أو جرب كود حاوية آخر.' 
-          : 'The Deep Tracking AI is currently busy due to high demand. Please wait 30 seconds and try again, or try another container code.');
+          ? 'نظام التتبع العميق (AI) مشغول حالياً. تم تفعيل وضع التقدير التلقائي. يرجى الانتظار 30 ثانية للمحاولة مرة أخرى للحصول على بيانات حية.' 
+          : 'The Deep Tracking AI is currently busy. Automatic estimation mode activated. Please wait 30 seconds to try again for live data.');
       } else {
         setError(language === 'Arabic' ? 'فشل تتبع الحاوية. يرجى التأكد من الكود والمحاولة مرة أخرى.' : 'Failed to track container. Please check the code and try again.');
       }
