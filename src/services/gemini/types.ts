@@ -70,5 +70,15 @@ export interface ContainerTrackingInfo {
   events: { date: string, location: string, description: string }[];
   futureTimeline: { date: string, event: string, location: string }[];
   trackingUrl: string;
+  isUnloaded: boolean;
+  unloadedDate?: string;
+  nextTrackingNumber?: string;
+  nextTrackingType?: string;
+  portStorageDays?: number;
+  freeTimeRemaining?: string;
+  customsStatus?: string;
+  terminalName?: string;
+  gateOutDate?: string;
+  finalDestinationETA?: string;
   coordinates?: { lat: number, lng: number };
 }

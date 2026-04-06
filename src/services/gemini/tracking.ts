@@ -33,6 +33,16 @@ export async function trackContainer(containerCode: string, language: string = '
     - events: At least 2-3 significant past milestones with days and locations.
     - futureTimeline: At least 2-3 predicted future milestones until final delivery.
     - coordinates: Current latitude and longitude of the vessel.
+    - isUnloaded: Boolean indicating if the container has been discharged/unloaded at the destination port.
+    - unloadedDate: If isUnloaded is true, provide the date (YYYY-MM-DD).
+    - nextTrackingNumber: If the cargo has been unloaded and a subsequent tracking number is available (e.g., for land transport, rail, or a new port-specific reference), provide it here.
+    - nextTrackingType: The type of the next tracking number (e.g., "Trucking", "Rail", "Port Reference").
+    - portStorageDays: Number of days the container has been at the port since unloading.
+    - freeTimeRemaining: Estimated free storage time remaining before demurrage/detention fees start (e.g., "2 days left").
+    - customsStatus: Current customs clearance status (e.g., "Pending", "Cleared", "Under Inspection").
+    - terminalName: Specific terminal name at the destination port.
+    - gateOutDate: If the container has left the port, provide the date (YYYY-MM-DD).
+    - finalDestinationETA: If land transport is active, provide the estimated arrival date at the final warehouse.
     
     Provide the response strictly in JSON format matching the requested schema.
     All text should be in ${language}.
@@ -80,6 +90,16 @@ export async function trackContainer(containerCode: string, language: string = '
         }
       },
       trackingUrl: { type: Type.STRING },
+      isUnloaded: { type: Type.BOOLEAN },
+      unloadedDate: { type: Type.STRING },
+      nextTrackingNumber: { type: Type.STRING },
+      nextTrackingType: { type: Type.STRING },
+      portStorageDays: { type: Type.NUMBER },
+      freeTimeRemaining: { type: Type.STRING },
+      customsStatus: { type: Type.STRING },
+      terminalName: { type: Type.STRING },
+      gateOutDate: { type: Type.STRING },
+      finalDestinationETA: { type: Type.STRING },
       coordinates: {
         type: Type.OBJECT,
         properties: {
@@ -92,7 +112,7 @@ export async function trackContainer(containerCode: string, language: string = '
     required: [
       "containerNumber", "carrier", "shipName", "voyageNumber", "status", 
       "lastLocation", "currentSpeed", "currentHeading", "estimatedArrival", 
-      "totalDuration", "totalDistance", "routeNotes", "costEstimates", "alerts", "events", "futureTimeline", "trackingUrl", "coordinates"
+      "totalDuration", "totalDistance", "routeNotes", "costEstimates", "alerts", "events", "futureTimeline", "trackingUrl", "coordinates", "isUnloaded"
     ]
   };
 
@@ -148,6 +168,15 @@ export async function trackContainer(containerCode: string, language: string = '
             { date: "2026-04-14", event: isAr ? "الإفراج الجمركي" : "Customs Release", location: isAr ? "محطة أشدود" : "Ashdod Terminal" }
           ],
           trackingUrl: "https://www.msc.com/track-a-container",
+          isUnloaded: true,
+          unloadedDate: "2026-04-05",
+          nextTrackingNumber: "TRK-99887766",
+          nextTrackingType: isAr ? "نقل بري" : "Trucking",
+          portStorageDays: 1,
+          freeTimeRemaining: isAr ? "3 أيام متبقية" : "3 days left",
+          customsStatus: isAr ? "تم التخليص" : "Cleared",
+          terminalName: isAr ? "محطة أشدود 1" : "Ashdod Terminal 1",
+          finalDestinationETA: "2026-04-08",
           coordinates: { lat: 35.9, lng: -5.6 }
         };
       }

@@ -165,6 +165,19 @@ export const ContainerTracking: React.FC<ContainerTrackingProps> = ({ language, 
                     <Clock className="w-3 h-3 text-blue-500" />
                     <span>ETA: {saved.estimatedArrival}</span>
                   </div>
+                  {saved.isUnloaded && (
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2 text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-lg w-fit">
+                        <Anchor className="w-3 h-3" />
+                        {isAr ? 'تم التفريغ' : 'Unloaded'}
+                      </div>
+                      {saved.nextTrackingNumber && (
+                        <div className="text-[9px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg w-fit">
+                          {isAr ? 'رقم تتبع جديد متاح' : 'Next tracking available'}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <button
                   onClick={() => {
@@ -243,6 +256,12 @@ export const ContainerTracking: React.FC<ContainerTrackingProps> = ({ language, 
             <div className="flex items-center gap-2 text-sm text-slate-500 font-medium">
               <Activity className="w-4 h-4 text-blue-600" />
               {isAr ? 'نتائج التتبع لـ:' : 'Tracking results for:'} <span className="text-slate-900 font-bold">{trackingInfo.containerNumber}</span>
+              {trackingInfo.isUnloaded && (
+                <span className="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                  <Anchor className="w-3 h-3" />
+                  {isAr ? 'تم التفريغ' : 'Unloaded'}
+                </span>
+              )}
             </div>
             
             <div className="flex items-center gap-3 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm">
@@ -298,6 +317,77 @@ export const ContainerTracking: React.FC<ContainerTrackingProps> = ({ language, 
               <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">{isAr ? 'الحالة' : 'Status'}</div>
               <div className="text-lg font-bold text-green-600">{trackingInfo.status}</div>
             </div>
+            {trackingInfo.isUnloaded && (
+              <div className="bg-green-600 text-white p-6 rounded-3xl shadow-lg flex flex-col justify-center">
+                <div className="text-[10px] font-bold text-green-100 uppercase mb-1">{isAr ? 'حالة الحمولة' : 'Cargo Status'}</div>
+                <div className="text-lg font-bold flex items-center gap-2">
+                  <Anchor className="w-5 h-5" />
+                  {isAr ? 'تم تفريغ الحمولة' : 'Cargo Unloaded'}
+                </div>
+                {trackingInfo.unloadedDate && (
+                  <div className="text-xs text-green-100 mt-1">{trackingInfo.unloadedDate}</div>
+                )}
+                {trackingInfo.nextTrackingNumber && (
+                  <div className="mt-4 p-3 bg-white/10 rounded-xl border border-white/20">
+                    <div className="text-[10px] font-bold text-green-200 uppercase mb-1">
+                      {isAr ? `رقم تتبع جديد (${trackingInfo.nextTrackingType})` : `New Tracking Number (${trackingInfo.nextTrackingType})`}
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-mono font-bold text-sm tracking-widest">{trackingInfo.nextTrackingNumber}</span>
+                      <button 
+                        onClick={() => {
+                          setContainerCode(trackingInfo.nextTrackingNumber!);
+                          handleTrack(undefined, trackingInfo.nextTrackingNumber);
+                        }}
+                        className="px-3 py-1 bg-white text-green-600 rounded-lg text-[10px] font-bold hover:bg-green-50 transition-all"
+                      >
+                        {isAr ? 'تتبع الآن' : 'Track Now'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Post-Port Details */}
+                {(trackingInfo.customsStatus || trackingInfo.terminalName || trackingInfo.portStorageDays !== undefined) && (
+                  <div className="mt-4 pt-4 border-t border-white/10 grid grid-cols-2 gap-3">
+                    {trackingInfo.customsStatus && (
+                      <div>
+                        <div className="text-[9px] font-bold text-green-200 uppercase">{isAr ? 'حالة الجمارك' : 'Customs Status'}</div>
+                        <div className="text-xs font-bold">{trackingInfo.customsStatus}</div>
+                      </div>
+                    )}
+                    {trackingInfo.terminalName && (
+                      <div>
+                        <div className="text-[9px] font-bold text-green-200 uppercase">{isAr ? 'المحطة' : 'Terminal'}</div>
+                        <div className="text-xs font-bold">{trackingInfo.terminalName}</div>
+                      </div>
+                    )}
+                    {trackingInfo.portStorageDays !== undefined && (
+                      <div>
+                        <div className="text-[9px] font-bold text-green-200 uppercase">{isAr ? 'أيام التخزين' : 'Storage Days'}</div>
+                        <div className="text-xs font-bold">{trackingInfo.portStorageDays} {isAr ? 'أيام' : 'days'}</div>
+                      </div>
+                    )}
+                    {trackingInfo.freeTimeRemaining && (
+                      <div>
+                        <div className="text-[9px] font-bold text-green-200 uppercase">{isAr ? 'الوقت المجاني المتبقي' : 'Free Time Left'}</div>
+                        <div className="text-xs font-bold text-amber-300">{trackingInfo.freeTimeRemaining}</div>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {trackingInfo.finalDestinationETA && (
+                  <div className="mt-4 p-3 bg-blue-600/50 rounded-xl border border-blue-400/30">
+                    <div className="text-[9px] font-bold text-blue-100 uppercase mb-1">{isAr ? 'الوصول المتوقع للمستودع' : 'Final Warehouse ETA'}</div>
+                    <div className="text-sm font-bold flex items-center gap-2">
+                      <Calendar className="w-4 h-4" />
+                      {trackingInfo.finalDestinationETA}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* AIS Real-time Data */}
