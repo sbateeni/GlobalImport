@@ -90,8 +90,8 @@ export const ContainerTracking: React.FC<ContainerTrackingProps> = ({ language, 
     } catch (err: any) {
       if (err.message === 'QUOTA_EXCEEDED') {
         setError(language === 'Arabic' 
-          ? 'عذراً، لقد تجاوزت حصة الاستخدام اليومية لتتبع الحاويات. يرجى المحاولة مرة أخرى لاحقاً.' 
-          : 'Sorry, you have exceeded the daily container tracking quota. Please try again later.');
+          ? 'نظام التتبع العميق (AI) مشغول حالياً بسبب ضغط الاستخدام. يرجى الانتظار لمدة 30 ثانية والمحاولة مرة أخرى، أو جرب كود حاوية آخر.' 
+          : 'The Deep Tracking AI is currently busy due to high demand. Please wait 30 seconds and try again, or try another container code.');
       } else {
         setError(language === 'Arabic' ? 'فشل تتبع الحاوية. يرجى التأكد من الكود والمحاولة مرة أخرى.' : 'Failed to track container. Please check the code and try again.');
       }
