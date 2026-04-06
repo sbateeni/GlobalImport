@@ -1,5 +1,5 @@
 import React from 'react';
-import { Ship, Search, FileText, ShieldCheck, Truck, Languages, MapPin, Settings as SettingsIcon } from 'lucide-react';
+import { Ship, Search, FileText, ShieldCheck, Truck, Languages, MapPin, Hash, Settings as SettingsIcon } from 'lucide-react';
 import { AppView, Language } from '../types';
 
 interface HeaderProps {
@@ -36,6 +36,12 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={() => onViewChange('search')}
             icon={<Search className="w-4 h-4" />}
             label={t.analyzeBtn}
+          />
+          <NavButton 
+            active={currentView === 'hscode'} 
+            onClick={() => onViewChange('hscode')}
+            icon={<Hash className="w-4 h-4" />}
+            label={isAr ? 'رمز HS' : 'HS Code'}
           />
           <NavButton 
             active={currentView === 'saved'} 
@@ -102,6 +108,12 @@ export const Header: React.FC<HeaderProps> = ({
           label={t.analyzeBtn}
         />
         <MobileNavButton 
+          active={currentView === 'hscode'} 
+          onClick={() => onViewChange('hscode')}
+          icon={<Hash className="w-5 h-5" />}
+          label={isAr ? 'رمز HS' : 'HS Code'}
+        />
+        <MobileNavButton 
           active={currentView === 'saved'} 
           onClick={() => onViewChange('saved')}
           icon={<FileText className="w-5 h-5" />}
@@ -125,12 +137,6 @@ export const Header: React.FC<HeaderProps> = ({
           onClick={() => onViewChange('tracking')}
           icon={<MapPin className="w-5 h-5" />}
           label={t.trackingBtn}
-        />
-        <MobileNavButton 
-          active={currentView === 'settings'} 
-          onClick={() => onViewChange('settings')}
-          icon={<SettingsIcon className="w-5 h-5" />}
-          label={isAr ? 'الضبط' : 'Settings'}
         />
       </nav>
     </header>

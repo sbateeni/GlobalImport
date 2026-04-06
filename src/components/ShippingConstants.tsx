@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { ArrowRight, DollarSign, Clock, Anchor, Trash2, RefreshCw } from 'lucide-react';
-import { ShippingRates } from '../services/geminiService';
+import { ShippingRates } from '../services/gemini';
 
 interface ShippingConstantsProps {
   constants: ShippingRates[];

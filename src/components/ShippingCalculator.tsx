@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { Truck, Calculator, DollarSign, Package, ArrowRight, Info, ShieldAlert, Globe, Coins, Clock } from 'lucide-react';
-import { ShippingRates } from '../services/geminiService';
+import { ShippingRates } from '../services/gemini';
 
 interface ShippingCalculatorProps {
   constants: ShippingRates[];

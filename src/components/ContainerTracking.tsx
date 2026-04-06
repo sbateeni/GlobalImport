@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { Search, Ship, MapPin, Clock, ExternalLink, Calendar, RefreshCw, Anchor, Navigation, Info, Activity, TrendingUp, DollarSign, ShieldCheck, Trash2, History, Globe } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import { trackContainer, ContainerTrackingInfo } from '../services/geminiService';
+import { trackContainer, ContainerTrackingInfo } from '../services/gemini';
 
 // Fix for Leaflet default icon issue in Vite
 // @ts-ignore

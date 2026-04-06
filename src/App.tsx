@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AlertTriangle, ShieldCheck } from 'lucide-react';
-import { analyzeImport, ImportAnalysis, ShippingRates, ContainerTrackingInfo } from './services/geminiService';
-import { SavedResult, AppView, Language } from './types';
+import { Language } from './types';
 import { Header } from './components/Header';
 import { SearchForm } from './components/SearchForm';
 import { AnalysisResult } from './components/AnalysisResult';
@@ -11,6 +10,8 @@ import { ShippingConstants } from './components/ShippingConstants';
 import { ShippingCalculator } from './components/ShippingCalculator';
 import { ContainerTracking } from './components/ContainerTracking';
 import { Settings } from './components/Settings';
+import { HSCodeFinder } from './components/HSCodeFinder';
+import { useAppLogic } from './hooks/useAppLogic';
 
 const LANGUAGES: Language[] = [
   { code: 'Arabic', label: 'العربية', dir: 'rtl' },
@@ -20,196 +21,50 @@ const LANGUAGES: Language[] = [
 ];
 
 export default function App() {
-  const [productName, setProductName] = useState('');
-  const [country, setCountry] = useState('');
   const [language, setLanguage] = useState(() => localStorage.getItem('import_lang') || 'Arabic');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysis, setAnalysis] = useState<ImportAnalysis | null>(null);
-  const [savedResults, setSavedResults] = useState<SavedResult[]>(() => {
-    const saved = localStorage.getItem('import_saved');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [currentView, setCurrentView] = useState<AppView>('search');
-  const [error, setError] = useState<string | null>(null);
-  const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'model', text: string }[]>([]);
-  const [chatInput, setChatInput] = useState('');
-  const [isChatLoading, setIsChatLoading] = useState(false);
-  const [actualCostsInput, setActualCostsInput] = useState<{ item: string, cost: string }[]>([]);
-  const [shippingConstants, setShippingConstants] = useState<ShippingRates[]>(() => {
-    const saved = localStorage.getItem('import_constants');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [isFetchingRates, setIsFetchingRates] = useState(false);
-  const [savedTracking, setSavedTracking] = useState<ContainerTrackingInfo[]>(() => {
-    const saved = localStorage.getItem('import_tracking');
-    return saved ? JSON.parse(saved) : [];
-  });
+  
+  const {
+    productName, setProductName,
+    country, setCountry,
+    isAnalyzing,
+    analysis,
+    savedResults,
+    currentView, setCurrentView,
+    error, setError,
+    chatMessages,
+    chatInput, setChatInput,
+    isChatLoading,
+    actualCostsInput, setActualCostsInput,
+    shippingConstants,
+    isFetchingRates,
+    savedTracking,
+    saveTrackingResult,
+    deleteTrackingResult,
+    handleAnalyze,
+    saveResult,
+    deleteSaved,
+    loadSaved,
+    handleChat,
+    saveActualCosts,
+    handleFetchRates,
+    deleteConstant
+  } = useAppLogic(language);
 
   useEffect(() => {
     localStorage.setItem('import_lang', language);
   }, [language]);
 
   useEffect(() => {
-    localStorage.setItem('import_saved', JSON.stringify(savedResults));
-  }, [savedResults]);
-
-  useEffect(() => {
-    localStorage.setItem('import_tracking', JSON.stringify(savedTracking));
-  }, [savedTracking]);
-
-  const saveTrackingResult = (info: ContainerTrackingInfo) => {
-    setSavedTracking(prev => {
-      const filtered = prev.filter(t => t.containerNumber !== info.containerNumber);
-      return [info, ...filtered];
-    });
-  };
-
-  const deleteTrackingResult = (containerNumber: string) => {
-    setSavedTracking(prev => prev.filter(t => t.containerNumber !== containerNumber));
-  };
-
-  useEffect(() => {
-    localStorage.setItem('import_constants', JSON.stringify(shippingConstants));
-  }, [shippingConstants]);
-
-  useEffect(() => {
     const handleQuickTrack = (e: any) => {
       setCurrentView('tracking');
-      // We can't directly set the container code in ContainerTracking from here easily without lifting state,
-      // but we can store it in localStorage or just let the user see the tracking page.
-      // Actually, let's just use a simple state for the initial tracking code.
       localStorage.setItem('import_quick_track', e.detail);
     };
     window.addEventListener('quick-track', handleQuickTrack);
     return () => window.removeEventListener('quick-track', handleQuickTrack);
-  }, []);
+  }, [setCurrentView]);
 
   const currentLang = LANGUAGES.find(l => l.code === language) || LANGUAGES[0];
   const isRtl = currentLang.dir === 'rtl';
-
-  const handleAnalyze = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!productName.trim() || !country.trim()) return;
-
-    setIsAnalyzing(true);
-    setError(null);
-    setAnalysis(null);
-    setChatMessages([]);
-    setActualCostsInput([]);
-    setCurrentView('search');
-
-    try {
-      const result = await analyzeImport(productName, country, language);
-      setAnalysis(result);
-      setActualCostsInput(result.costBreakdown.map(c => ({ item: c.item, cost: '' })));
-    } catch (err: any) {
-      const errStr = err instanceof Error ? err.message : String(err);
-      if (err.message === 'QUOTA_EXCEEDED' || errStr.includes('429') || errStr.includes('RESOURCE_EXHAUSTED')) {
-        setError(language === 'Arabic' 
-          ? 'عذراً، لقد تجاوزت حصة الاستخدام اليومية للذكاء الاصطناعي. يرجى المحاولة مرة أخرى لاحقاً أو غداً.' 
-          : 'Sorry, you have exceeded the daily AI usage quota. Please try again later or tomorrow.');
-      } else {
-        setError(err instanceof Error ? err.message : 'An unexpected error occurred while analyzing.');
-      }
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
-
-  const saveResult = () => {
-    if (!analysis) return;
-    const newSave: SavedResult = {
-      id: Date.now().toString(),
-      product: productName,
-      country: country,
-      analysis: analysis,
-      date: new Date().toLocaleDateString(language === 'Arabic' ? 'ar-EG' : 'en-US'),
-      actualCosts: actualCostsInput.length > 0 ? actualCostsInput : analysis.costBreakdown.map(c => ({ item: c.item, cost: '' }))
-    };
-    setSavedResults([newSave, ...savedResults]);
-  };
-
-  const deleteSaved = (id: string) => {
-    setSavedResults(savedResults.filter(s => s.id !== id));
-  };
-
-  const loadSaved = (saved: SavedResult) => {
-    setAnalysis(saved.analysis);
-    setProductName(saved.product);
-    setCountry(saved.country);
-    setActualCostsInput(saved.actualCosts || saved.analysis.costBreakdown.map(c => ({ item: c.item, cost: '' })));
-    setChatMessages([]);
-    setCurrentView('search');
-  };
-
-  const handleChat = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!chatInput.trim() || !analysis) return;
-
-    const userMessage = { role: 'user' as const, text: chatInput };
-    setChatMessages(prev => [...prev, userMessage]);
-    setChatInput('');
-    setIsChatLoading(true);
-
-    try {
-      const { chatFollowUp } = await import('./services/geminiService');
-      const response = await chatFollowUp(chatInput, chatMessages, analysis, language);
-      setChatMessages(prev => [...prev, { role: 'model' as const, text: response }]);
-    } catch (err: any) {
-      if (err.message === 'QUOTA_EXCEEDED') {
-        setError(language === 'Arabic' 
-          ? 'عذراً، لقد تجاوزت حصة الاستخدام اليومية للدردشة. يرجى المحاولة مرة أخرى لاحقاً.' 
-          : 'Sorry, you have exceeded the daily chat quota. Please try again later.');
-      } else {
-        setError('Chat failed: ' + (err instanceof Error ? err.message : 'Unknown error'));
-      }
-    } finally {
-      setIsChatLoading(false);
-    }
-  };
-
-  const saveActualCosts = (id: string) => {
-    setSavedResults(prev => prev.map(s => 
-      s.id === id ? { ...s, actualCosts: actualCostsInput } : s
-    ));
-  };
-
-  const normalizeStr = (str: string) => {
-    return str
-      .trim()
-      .toLowerCase()
-      .replace(/[إأآ]/g, 'ا')
-      .replace(/ة/g, 'ه')
-      .replace(/ى/g, 'ي');
-  };
-
-  const handleFetchRates = async (targetCountry: string) => {
-    if (!targetCountry.trim()) return;
-    setIsFetchingRates(true);
-    try {
-      const { fetchShippingRates } = await import('./services/geminiService');
-      const rates = await fetchShippingRates(targetCountry, language);
-      setShippingConstants(prev => {
-        const normalizedTarget = normalizeStr(targetCountry);
-        const filtered = prev.filter(p => normalizeStr(p.country) !== normalizedTarget);
-        return [rates, ...filtered];
-      });
-    } catch (err: any) {
-      if (err.message === 'QUOTA_EXCEEDED') {
-        setError(language === 'Arabic' 
-          ? 'عذراً، لقد تجاوزت حصة الاستخدام اليومية لتحديث الأسعار. يرجى المحاولة مرة أخرى لاحقاً.' 
-          : 'Sorry, you have exceeded the daily quota for updating rates. Please try again later.');
-      } else {
-        setError('Failed to fetch rates: ' + (err instanceof Error ? err.message : 'Unknown error'));
-      }
-    } finally {
-      setIsFetchingRates(false);
-    }
-  };
-
-  const deleteConstant = (countryName: string) => {
-    setShippingConstants(shippingConstants.filter(c => normalizeStr(c.country) !== normalizeStr(countryName)));
-  };
 
   const t = {
     title: language === 'Arabic' ? 'استورد من الصين بكل ثقة' : 'Import from China with Confidence',
@@ -394,6 +249,13 @@ export default function App() {
               key="settings"
               language={language}
               isRtl={isRtl}
+            />
+          )}
+
+          {currentView === 'hscode' && (
+            <HSCodeFinder 
+              key="hscode"
+              language={language}
             />
           )}
         </AnimatePresence>

@@ -1,4 +1,4 @@
-import { ImportAnalysis, ShippingRates } from './services/geminiService';
+import { ImportAnalysis, ShippingRates } from './services/gemini';
 
 export interface SavedResult {
   id: string;
@@ -9,7 +9,7 @@ export interface SavedResult {
   actualCosts?: { item: string, cost: string }[];
 }
 
-export type AppView = 'search' | 'saved' | 'constants' | 'calculator' | 'tracking' | 'settings';
+export type AppView = 'search' | 'saved' | 'constants' | 'calculator' | 'tracking' | 'settings' | 'hscode';
 
 export interface Language {
   code: string;
